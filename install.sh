@@ -4,6 +4,7 @@ pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 --index-url https
 pip install torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-2.4.0+cu124.html
 pip install torch-cluster -f https://data.pyg.org/whl/torch-2.4.0+cu124.html
 pip install pyg-lib -f https://data.pyg.org/whl/torch-2.4.0+cu124.html
+echo "Now go and thank this brother git@github.com:anilakash/torchdrug.git as our god and savior"
 git clone git@github.com:anilakash/torchdrug.git
 cd torchdrug
 pip install -r requirements.txt
