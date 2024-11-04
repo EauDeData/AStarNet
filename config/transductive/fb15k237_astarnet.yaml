@@ -1,8 +1,8 @@
-output_dir: ~/experiments/
+output_dir: /data/users/amolina/ckpts/
 
 dataset:
   class: FB15k237
-  path: ~/datasets/knowledge_graphs/
+  path: /data/users/amolina/knowledge_graphs/
 
 task:
   class: KnowledgeGraphCompletion
