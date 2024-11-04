@@ -38,21 +38,28 @@ This codebase contains implementation for A\*Net and its predecessor [NBFNet].
 
 ## Installation ##
 
-The dependencies can be installed via either conda or pip. A\*Net is compatible
-with 3.7 <= Python <= 3.10 and PyTorch >= 1.13.0.
-
-### From Conda ###
+I have ran through ashes, dust and bones to make this installation work.
+find here a short script for minimal instalation of a working environment in CUDA 12.4 and PyTorch 2.40:
 
 ```bash
-conda install pytorch cudatoolkit torchdrug pytorch-sparse -c pytorch -c pyg -c milagraph
-conda install ogb easydict pyyaml openai -c conda-forge
-```
+conda create -n astar python==3.10 -y
+conda activate astar; conda clean -a -y; pip cache purge
+pip install numpy==1.26.4
+pip install torch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 --index-url https://download.pytorch.org/whl/cu124
+pip install torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-2.4.0+cu124.html
+pip install torch-cluster -f https://data.pyg.org/whl/torch-2.4.0+cu124.html
+pip install pyg-lib -f https://data.pyg.org/whl/torch-2.4.0+cu124.html
+echo "Now go and thank this brother git@github.com:anilakash/torchdrug.git"
+git clone git@github.com:anilakash/torchdrug.git
+cd torchdrug
+pip install -r requirements.txt
+python setup.py install
+cd ..; rm -rf ./torchdrug
 
-### From Pip ###
-
-```bash
-pip install torch torchdrug torch-sparse
-pip install ogb easydict pyyaml openai
+pip install ogb
+pip install easydict
+pip install PyYAML
+pip install easydict
 ```
 
 ## Usage ##
