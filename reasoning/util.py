@@ -131,4 +131,5 @@ def detect_variables(cfg_file):
     env = jinja2.Environment()
     ast = env.parse(raw)
     vars = meta.find_undeclared_variables(ast)
+    print('waaaa', ast)
     return vars

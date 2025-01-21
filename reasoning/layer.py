@@ -52,6 +52,7 @@ class GeneralizedRelationalConv(layers.MessagePassingBase, core.Configurable):
         adjacency = torch.rand(1, 1, 1, device=self.device).to_sparse()
         relation_input = torch.rand(1, 32, device=self.device)
         input = torch.rand(1, 32, device=self.device)
+        torch.cuda.synchronize()
         functional.generalized_rspmm(adjacency, relation_input, input, sum="add", mul="mul")
 
     def compute_message(self, node_input, edge_input):
@@ -170,6 +171,7 @@ class GeneralizedRelationalConv(layers.MessagePassingBase, core.Configurable):
             update = torch.max(update, boundary)
         elif self.aggregate_func == "pna":
             sum = functional.generalized_rspmm(adjacency, relation_input, input, sum="add", mul=mul)
+            torch.cuda.synchronize()
             sq_sum = functional.generalized_rspmm(adjacency, relation_input ** 2, input ** 2, sum="add", mul=mul)
             max = functional.generalized_rspmm(adjacency, relation_input, input, sum="max", mul=mul)
             min = functional.generalized_rspmm(adjacency, relation_input, input, sum="min", mul=mul)
@@ -199,6 +201,10 @@ class GeneralizedRelationalConv(layers.MessagePassingBase, core.Configurable):
         if self.activation:
             output = self.activation(output)
         return output
+
+    def forward(self, graph, input):
+        # print(input)
+        return super().forward(graph, input)
 
 
 @R.register("layer.CompGCNConv")

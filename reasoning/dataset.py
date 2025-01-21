@@ -9,7 +9,7 @@ from torch.utils import data as torch_data
 
 from torchdrug import data, datasets, utils
 from torchdrug.core import Registry as R
-
+import warnings
 
 class InductiveKnowledgeGraphDataset(data.KnowledgeGraphDataset):
 
@@ -21,15 +21,22 @@ class InductiveKnowledgeGraphDataset(data.KnowledgeGraphDataset):
         triplets = []
         num_samples = []
 
+        num_errors = 0
         for txt_file in transductive_files:
             with open(txt_file, "r") as fin:
+
                 reader = csv.reader(fin, delimiter="\t")
                 if verbose:
                     reader = tqdm(reader, "Loading %s" % txt_file, utils.get_line_count(txt_file))
 
                 num_sample = 0
                 for tokens in reader:
+                    if len(tokens) != 3:
+                        warnings.warn(f"Line: {tokens} in {txt_file} split seems corrupted")
+                        num_errors += 1
+                        continue
                     h_token, r_token, t_token = tokens
+
                     if h_token not in inv_transductive_vocab:
                         inv_transductive_vocab[h_token] = len(inv_transductive_vocab)
                     h = inv_transductive_vocab[h_token]
@@ -51,6 +58,9 @@ class InductiveKnowledgeGraphDataset(data.KnowledgeGraphDataset):
 
                 num_sample = 0
                 for tokens in reader:
+                    if len(tokens) != 3:
+                        warnings.warn(f"Line: {tokens} in {txt_file} split seems corrupted")
+                        continue
                     h_token, r_token, t_token = tokens
                     if h_token not in inv_inductive_vocab:
                         inv_inductive_vocab[h_token] = len(inv_inductive_vocab)
@@ -63,10 +73,15 @@ class InductiveKnowledgeGraphDataset(data.KnowledgeGraphDataset):
                     triplets.append((h, t, r))
                     num_sample += 1
             num_samples.append(num_sample)
+        print('Process finished with', num_errors, "error lines found")
 
         transductive_vocab, inv_transductive_vocab = self._standarize_vocab(None, inv_transductive_vocab)
         inductive_vocab, inv_inductive_vocab = self._standarize_vocab(None, inv_inductive_vocab)
         relation_vocab, inv_relation_vocab = self._standarize_vocab(None, inv_relation_vocab)
+        print(f'Vocab done with:\n\t Transductive Vocab: {len(transductive_vocab)}')
+        print(f'Vocab done with:\n\t Inductive Vocab: {len(inductive_vocab)}')
+        print(f'Vocab done with:\n\t Relation Vocab: {len(relation_vocab)}')
+        print(f"Num samples:", num_samples)
 
         self.fact_graph = data.Graph(triplets[:num_samples[0]],
                                      num_node=len(transductive_vocab), num_relation=len(relation_vocab))
@@ -114,6 +129,7 @@ class FB15k237Inductive(InductiveKnowledgeGraphDataset):
     ]
 
     def __init__(self, path, version="v1", verbose=1):
+
         path = os.path.expanduser(path)
         if not os.path.exists(path):
             os.makedirs(path)
@@ -138,6 +154,48 @@ class FB15k237Inductive(InductiveKnowledgeGraphDataset):
 
         self.load_inductive_tsvs(transductive_files, inductive_files, verbose=verbose)
 
+@R.register("dataset.HMMKGDataset")
+class HMMKGDataset(data.KnowledgeGraphDataset):
+
+    def __init__(self, path, verbose=1):
+        path = os.path.expanduser(path)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        self.path = path
+
+        transductive_files = []
+        base_string = '{split}_combined.tsv'
+
+        # images_path = 'images'
+        # look_up_media = os.path.join(self.path, images_path, 'downloaded_images.tsv')
+        # images_base_path = os.path.join(self.path, images_path, 'images')
+
+        for splits in ['train', 'val', 'test']:
+            transductive_files.append(os.path.join(self.path, base_string.format(split=splits)))
+
+        self.load_tsvs(transductive_files, verbose=verbose)
+
+    def split(self):
+        offset = 0
+        splits = []
+        for num_sample in self.num_samples:
+            split = torch_data.Subset(self, range(offset, offset + num_sample))
+            splits.append(split)
+            offset += num_sample
+        return splits
+
+    def __getitem__(self, index):
+        '''
+        Returns the triplet index
+        [entity, entity, relation]
+
+        '''
+        # WARNING: The image is placed at impath.split('.')[0] + '_224v2.png'
+        # Yes, always PNG, quin luxe!!
+
+        # print(f"[{self.entity_vocab[self.graph.edge_list[index][0]]}]--{self.relation_vocab[self.graph.edge_list[index][2]]}-->[{self.entity_vocab[self.graph.edge_list[index][1]]}]")
+
+        return self.graph.edge_list[index]
 
 @R.register("dataset.WN18RRInductive")
 class WN18RRInductive(InductiveKnowledgeGraphDataset):

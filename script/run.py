@@ -43,8 +43,9 @@ def test(cfg, solver):
 
 
 if __name__ == "__main__":
-    args, vars = util.parse_args()
-    cfg = util.load_config(args.config, context=vars)
+
+    args, variables = util.parse_args()
+    cfg = util.load_config(args.config, context=variables)
     working_dir = util.create_working_directory(cfg)
 
     torch.manual_seed(args.seed + comm.get_rank())
@@ -54,7 +55,9 @@ if __name__ == "__main__":
         logger.warning("Config file: %s" % args.config)
         logger.warning(pretty.format(cfg))
 
+
     dataset = core.Configurable.load_config_dict(cfg.dataset)
+
     solver = util.build_solver(cfg, dataset)
 
     train_and_validate(cfg, solver)
